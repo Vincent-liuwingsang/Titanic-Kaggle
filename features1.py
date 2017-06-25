@@ -86,10 +86,10 @@ def fill_embarked(df):
 
 def fill_cabin(df):
 	df.Cabin.fillna('U', inplace=True)
-	df['Cabin'] = df['Cabin'].apply(lambda c : c[0])
+	df['Cabin'] = df['Cabin'].apply(lambda c : 1 if c[0]=='U' else 0)
 	return df
 
-def cleanTicket(ticket):
+def ticketAlpha(ticket):
 	ticket = ticket.replace('.','')
 	ticket = ticket.replace('/','')
 	ticket = ticket.split()
@@ -99,9 +99,18 @@ def cleanTicket(ticket):
 		return ticket[0]
 	else: 
 		return 'XXX'
+def ticketNum(ticket):
+	ticket = ticket.replace('.','')
+	ticket = ticket.replace('/','')
+	ticket = ticket.replace('[a-zA-Z]','')
+	ticket = ticket.split()
+	return str(ticket[len(ticket)-1])[0]
+
 
 def fill_ticket(df):
-	df['Ticket'] = df['Ticket'].map(cleanTicket) 
+	df['TicketAlpha'] = df['Ticket'].map(ticketAlpha)
+	df['TicketNum'] = df['Ticket'].map(ticketNum)
+	df['TicketNum'] = df['TicketNum'].convert_objects(convert_numeric=True)
 	return df
 
 
@@ -112,5 +121,22 @@ def add_family(df):
 	df['SmallFamily'] = df['FamilySize'].map(lambda s: 1 if 2<=s<=4 else 0)
 	df['LargeFamily'] = df['FamilySize'].map(lambda s: 1 if 5<=s else 0)
 	return df
-    
+
+def simplify_ages_intuition(df):
+	bins=(-1,0,5,12,18,25,35,60,120)
+	tags = ['Unknown', 'Baby', 'Child', 'Teenager', 'Student', 'Young Adult', 'Adult', 'Senior']
+	df['Age'] = pd.cut(df['Age'],bins , labels=tags) 
+	return df
+
+def simplify_ages_bins(df,b):
+	tags=range(b)
+	df['Age'] = pd.cut(df['Age'],bins=b,labels=tags) 
+	return df
+def add_share(total):
+	FareFreq=total.Fare.value_counts()
+	TicketFreq=total.Ticket.value_counts()
+	CabinFreq=total.Cabin.value_counts()
+	total['ShareFare'] = total['Fare'].apply(lambda x: FareFreq[x] if FareFreq[x]>1 else 0)
+	total['ShareTicket'] = total['Ticket'].apply(lambda x: TicketFreq[x] if TicketFreq[x]>1 else 0)
+	total['ShareCabin'] = total['Cabin'].apply(lambda x: CabinFreq[x] if CabinFreq[x]>1 else 0)
 

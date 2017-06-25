@@ -49,6 +49,38 @@ data_y=train['Survived']
 data_x=total.iloc[range(len(data_y))]
 test_x=total.iloc[len(data_y):]
 
+cv_params = {
+	'max_depth':[3,5,7],
+	'min_child_weight':[1,3,5],
+}
+fixed_params = {
+	'learning_rate':0.1,
+	'n_estimators':1000,
+	'seed':0,
+	'subsample':0.8,
+	'colsample_bytree':0.8,
+	'objective':'binaty:logistic',
+}
+
+optimized_gbm = GridSearhCV(xgb.XGBClassifier(**fixed_params),
+							cv_params,
+							scoring='accuracy',
+							cv=5,
+							n_jobs=-1)
+
+
+
+
+
+
+
+
+
+
+
+
+
+"""
 model = xgb.XGBClassifier(learning_rate =0.1, 
                       n_estimators=1000,
                       reg_alpha=0.01,
@@ -89,44 +121,6 @@ print "AUC Score (Train): %f" % metrics.roc_auc_score(data_y, pred_prob)
 model_s = fs.SelectFromModel(model, prefit=True)
 data_x_reduced = model_s.transform(data_x)
 test_x_reduced = model_s.transform(test_x)
-
-model = xgb.XGBClassifier(learning_rate =0.01, 
-                      n_estimators=5000,
-                      reg_alpha=0.01,
-                      colsample_bytree=0.9,
-                      min_child_weight=8,
-                      subsample=0.7,
-                      max_depth=9,
-                      gamma=0.0,
-                      objective= 'binary:logistic', 
-                      n_jobs=1, 
-                      scale_pos_weight=1,
-                      random_state = 5)
-
-xgbTrain = xgb.DMatrix(data_x, label=data_y)
-xgbParams = model.get_xgb_params()
-cv_result=xgb.cv(xgbParams,
-                 xgbTrain,
-                 stratified=True,
-                 num_boost_round=model.get_params()['n_estimators'],
-                 nfold= 5,
-                 metrics='auc',
-                 early_stopping_rounds=50,
-                 callbacks=[xgb.callback.print_evaluation(show_stdv=False), xgb.callback.early_stop(50)],
-                 seed=11
-                 )
-
-model.set_params(n_estimators=cv_result.shape[0])
-model.fit(data_x_reduced,data_y, eval_metric='auc')
-
-predictions = model.predict(data_x_reduced)
-pred_prob = model.predict_proba(data_x_reduced)[:,1]
-
-	
-print "\nModel Report"
-print "Accuracy : %.4g" % metrics.accuracy_score(data_y, predictions)
-print "AUC Score (Train): %f" % metrics.roc_auc_score(data_y, pred_prob)
-"""
 param_test1 = {
 # 'max_depth':[9],
 # 'min_child_weight':[8],
@@ -245,11 +239,10 @@ model = xgb.XGBClassifier(learning_rate=0.1,
 
 grid = ms.GridSearchCV(estimator=model, param_grid=param_grid, scoring='roc_auc', n_jobs=-1, verbose=1)
 grid.fit(train_x,train_y)
-model.fit(train_x,train_y)
-"""
 predictions = model.predict(test_x_reduced)
 submission = pd.DataFrame({ 'PassengerId': test['PassengerId'],
                             'Survived': predictions })
 submission.to_csv("submission.csv", index=False)
 print "saved submission"
+ 	"""
 
