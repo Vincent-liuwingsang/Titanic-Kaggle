@@ -71,8 +71,10 @@ def fill_age(df):
 	grouped_test = df.iloc[891:].groupby(['Sex','Pclass','Title'])
 	grouped_median_train = grouped_train.median()
 	grouped_median_test = grouped_test.median()
-	df.iloc[:891].Age = df.iloc[:891].apply(lambda r : fillAges(r, grouped_median_train) if np.isnan(r['Age']) else r['Age'], axis=1)
-	df.iloc[891:].Age = df.iloc[891:].apply(lambda r : fillAges(r, grouped_median_test) if np.isnan(r['Age']) else r['Age'], axis=1)
+	df.info()
+	df.iloc[:891].loc[:,('Age')] = df.iloc[:891].apply(lambda r : fillAges(r, grouped_median_train) if np.isnan(r['Age']) else r['Age'], axis=1)
+	df.iloc[891:].loc[:,('Age')] = df.iloc[891:].apply(lambda r : fillAges(r, grouped_median_test) if np.isnan(r['Age']) else r['Age'], axis=1)
+	df.info()
 	return df
 
 def fill_fare(df):

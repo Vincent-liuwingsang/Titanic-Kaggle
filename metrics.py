@@ -66,33 +66,40 @@ def plot_calibration_curve(est, name, fig_index,X,y,train_i,test_i):
 
 	
 def cross_validate(alg, X,y,seed=0,rep=10,cv=5):   
-	base_fpr = np.linspace(0, 1, 101)
-	plt.figure(figsize=(10, 10))
+	#base_fpr = np.linspace(0, 1, 101)
+	#plt.figure(figsize=(10, 10))
 
 	tprs = []
 	accuracies = []
 	roc_auc_scores = []
 	log_losses = []
 	confuses=[]
+	f1s=[]
 	for i in np.random.randint(0,high=10000, size=rep):
 		kf = ms.KFold(n_splits=cv, shuffle=True, random_state=seed+i)
 		for train_i, test_i in kf.split(X):
-			alg.fit(X.iloc[train_i], y.iloc[train_i],eval_metric='auc')
+			alg.fit(X.iloc[train_i], y.iloc[train_i])
+#			alg.fit(X.iloc[train_i], y.iloc[train_i],eval_metric='auc') for xgb_classifer
 			predictions = alg.predict(X.iloc[test_i])
 			predict_prob = alg.predict_proba(X.iloc[test_i])[:,1]   
 			roc_auc_score = metrics.roc_auc_score(y.iloc[test_i],predict_prob)
 			accuracy = metrics.accuracy_score(y.iloc[test_i],predictions)
-			log_loss = metrics.log_loss(y.iloc[test_i], predict_prob)
-			fpr, tpr, _ = metrics.roc_curve(y.iloc[test_i], predict_prob)
-			plt.plot(fpr, tpr, 'b', alpha=0.15)
-			tpr = interp(base_fpr, fpr, tpr)
-			tpr[0] = 0.0
-			tprs.append(tpr)	
+			log_loss = metrics.log_loss(y.iloc[test_i], predict_prob, eps=1e-15, normalize=True)
+			f1_score = metrics.f1_score(y.iloc[test_i],predictions)
+#			fpr, tpr, _ = metrics.roc_curve(y.iloc[test_i], predict_prob)
+#			plt.plot(fpr, tpr, 'b', alpha=0.15)
+#			tpr = interp(base_fpr, fpr, tpr)
+#			tpr[0] = 0.0
+#			tprs.append(tpr)	
 			accuracies.append(accuracy)
 			roc_auc_scores.append(roc_auc_score)
 			log_losses.append(log_loss)
 			confuses.append(metrics.confusion_matrix(y.iloc[test_i], predictions))
+			f1s.append(f1_score)
+	x=np.array(confuses)[:,:,:].sum(axis=0)/len(confuses)
 
+	return (np.mean(accuracies),np.mean(roc_auc_scores),np.mean(log_losses),1.0*x.item(3)/(x.item(3)+x.item(2)),1.0*x.item(3)/(x.item(3)+x.item(1)),np.mean(f1s))
+"""
 	# graph plotting for ROC
 	tprs = np.array(tprs)
 	mean_tprs = tprs.mean(axis=0)
@@ -121,5 +128,5 @@ def cross_validate(alg, X,y,seed=0,rep=10,cv=5):
 		print r
 	print "Mean Precision: %f" % (1.0*x.item(3)/(x.item(3)+x.item(2)))
 	print "Mean Recall: %f"% (1.0*x.item(3)/(x.item(3)+x.item(1)))       
-
+"""
  
